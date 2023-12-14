@@ -76,25 +76,40 @@ extern crate std;
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Unspecified;
 
+impl Unspecified {
+    fn description_() -> &'static str {
+        "ring::error::Unspecified"
+    }
+}
+
 // This is required for the implementation of `std::error::Error`.
 impl core::fmt::Display for Unspecified {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.write_str("ring::error::Unspecified")
+        f.write_str(Self::description_())
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for Unspecified {}
+impl std::error::Error for Unspecified {
+    #[inline]
+    fn cause(&self) -> Option<&dyn std::error::Error> {
+        None
+    }
+
+    fn description(&self) -> &str {
+        Self::description_()
+    }
+}
 
 impl From<untrusted::EndOfInput> for Unspecified {
     fn from(_: untrusted::EndOfInput) -> Self {
-        Self
+        Unspecified
     }
 }
 
 impl From<core::array::TryFromSliceError> for Unspecified {
     fn from(_: core::array::TryFromSliceError) -> Self {
-        Self
+        Unspecified
     }
 }
 
@@ -132,6 +147,11 @@ impl From<core::array::TryFromSliceError> for Unspecified {
 pub struct KeyRejected(&'static str);
 
 impl KeyRejected {
+    /// The value returned from <Self as std::error::Error>::description()
+    pub fn description_(&self) -> &'static str {
+        self.0
+    }
+
     pub(crate) fn inconsistent_components() -> Self {
         Self("InconsistentComponents")
     }
@@ -183,16 +203,24 @@ impl KeyRejected {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for KeyRejected {}
+impl std::error::Error for KeyRejected {
+    fn cause(&self) -> Option<&dyn std::error::Error> {
+        None
+    }
+
+    fn description(&self) -> &str {
+        self.description_()
+    }
+}
 
 impl core::fmt::Display for KeyRejected {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.write_str(self.0)
+        f.write_str(self.description_())
     }
 }
 
 impl From<KeyRejected> for Unspecified {
     fn from(_: KeyRejected) -> Self {
-        Self
+        Unspecified
     }
 }
